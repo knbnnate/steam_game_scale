@@ -249,7 +249,7 @@ class steam_game_scale(tk.Tk):
       print(inst)
       traceback.print_exc()
       self.initial_input_state()
-      self.status_header_label.configure(fg='#FF0000')
+      self.status_header_label.configure(fg=red)
   def friend_balance_button_click(self):
     self.valid_friends_state()
     self.selected_friend_persona=self.friends_combobox.get()
