@@ -4,7 +4,7 @@ Balance your Steam game playtime against your friends' to see what you have in c
 Requires:
 Python 3.5
 requests module
-A SteamID
+A SteamID - 64-bit, corresponding to a PUBLIC profile to allow GetFriendList lookups to work
 A Steam API Key
 
 So...
