@@ -232,7 +232,8 @@ class steam_game_scale(tk.Tk):
 
   def valid_friends_state(self):
     self.status_header_label.configure(fg='silver')
-    self.friend_balance_button.configure(state='active')
+    self.friend_balance_button.configure(state='active',fg=medium,bg=silver)
+    self.friend_balance_button.configure(fg=medium,bg=silver)
     while self.game_intersections_listbox.size() > 0:
       self.game_intersections_listbox.delete(0)
     
