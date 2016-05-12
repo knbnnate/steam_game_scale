@@ -130,7 +130,8 @@ class steam_game_scale(tk.Tk):
     return ret
   
   def resolve_vanity_url(self,vanity_url,version='v0001'):
-    response=self.steam_api_call('ISteamUser','ResolveVanityURL',{'vanityurl':vanity_url}, version)['response']
+    method_params={'vanityurl':vanity_url}
+    response=self.steam_api_call('ISteamUser','ResolveVanityURL',method_params,version)['response']
     if response['success'] == 1:
       return response['steamid']
     
@@ -155,6 +156,7 @@ class steam_game_scale(tk.Tk):
     self.steamid_entry.configure(width=skinny,fg=light,bg=silver,justify='center')
     self.steam_api_key_entry_label_text.set('Steam API Key')
     self.steam_api_key_entry_label.configure(width=fat,bg=medium,fg=silver,justify='center')
+    self.steam_api_key_entry.configure(show='*')
     self.steam_api_key_entry.configure(width=fat,fg=light,bg=silver,justify='center')
     self.query_friends_button.configure(text='Query Friends List', command=self.query_friends_button_click,fg=medium,bg=silver)
     self.style.configure('Steam.TCombobox',background=[('pressed',silver)],foreground=[('pressed',light)])
@@ -209,6 +211,7 @@ class steam_game_scale(tk.Tk):
     self.steam_api_key_entry_label_text = tk.StringVar()
     self.steam_api_key_entry_label = label(self,self.steam_api_key_entry_label_text,60)
     self.steam_api_key_entry = entry(self,70)
+    self.steam_api_key_entry.configure(show='*')
     self.steam_api_key_entry.configure(textvar=self.steam_api_key_tv)
     space(self,80)
     self.query_friends_button = button(self,90)
