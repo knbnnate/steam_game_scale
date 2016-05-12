@@ -148,13 +148,13 @@ class steam_game_scale(tk.Tk):
     return self.get_player_summaries(','.join([friend['steamid'] for friend in response]))['response']['players']
 
   def initial_input_state(self):
-    self.status_header_text.set('Please enter a valid SteamID and Steam API Key')
+    self.status_header_text.set('Please enter a valid 64-bit SteamID and a valid Steam API Key')
     self.status_header_label.configure(width=fat,bg=medium,fg=silver)
-    self.steamid_entry_label_text.set('SteamID')
+    self.steamid_entry_label_text.set('SteamID64')
     self.steamid_entry_label.configure(width=fat,bg=medium,fg=silver)
     self.steamid_entry.configure(width=skinny,fg=light,bg=silver,justify='center')
     self.steam_api_key_entry_label_text.set('Steam API Key')
-    self.steam_api_key_entry_label.configure(width=fat,bg=medium,justify='center')
+    self.steam_api_key_entry_label.configure(width=fat,bg=medium,fg=silver,justify='center')
     self.steam_api_key_entry.configure(width=fat,fg=light,bg=silver,justify='center')
     self.query_friends_button.configure(text='Query Friends List', command=self.query_friends_button_click,fg=medium,bg=silver)
     self.style.configure('Steam.TCombobox',background=[('pressed',silver)],foreground=[('pressed',light)])
