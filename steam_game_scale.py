@@ -100,10 +100,19 @@ def grid_combobox(foo,bar=0):
 combobox=grid_combobox
 
 class steam_game_scale(tk.Tk):
-  def __init__(self,parent):
+  def __init__(self,parent=None,api_key=None,steam_id_64=None):
     tk.Tk.__init__(self,parent)
     self.parent=parent
     self.blanktext=tk.StringVar(value='blank')
+    if api_key is not None:
+      self.steam_api_key_tv=tk.StringVar(value=api_key)
+    else:
+      self.steam_api_key_tv=tk.StringVar(value='')
+    if steam_id_64 is not None:
+      self.steamid_tv=tk.StringVar(value=steam_id_64)
+    else:
+      self.steamid_tv=tk.StringVar(value='')
+    self.steamid=steam_id_64
     self.initialize()
     
   def steam_api_call(self, api, method, parameters, version='v0001'):
@@ -195,10 +204,12 @@ class steam_game_scale(tk.Tk):
     self.steamid_entry_label_text = tk.StringVar()
     self.steamid_entry_label = label(self,self.steamid_entry_label_text,30)
     self.steamid_entry = entry(self,40)
+    self.steamid_entry.configure(textvar=self.steamid_tv)
     space(self,50)
     self.steam_api_key_entry_label_text = tk.StringVar()
     self.steam_api_key_entry_label = label(self,self.steam_api_key_entry_label_text,60)
     self.steam_api_key_entry = entry(self,70)
+    self.steam_api_key_entry.configure(textvar=self.steam_api_key_tv)
     space(self,80)
     self.query_friends_button = button(self,90)
     space(self,100)
@@ -292,7 +303,14 @@ class steam_game_scale(tk.Tk):
     
 
 if __name__ == '__main__':
-  app = steam_game_scale(None)
+  api_key_arg=None
+  steamid_arg=None
+  for arg in sys.argv:
+    if arg.startswith('--apikey='):
+      api_key_arg=arg.partition('=')[2].partition('=')[0]
+    if arg.startswith('--steamid='):
+      steamid_arg=arg.partition('=')[2].partition('=')[0]
+  app = steam_game_scale(None,api_key_arg,steamid_arg)
   app.title('Steam Game Scale')
   app.configure(background=dark)
   app.mainloop()
