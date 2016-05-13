@@ -23,6 +23,19 @@ class steam_game():
     self.playtime_forever = steam_game_info.get('playtime_forever',0)
     self.owner_personaname = owner_personaname
     self.owner_steamid = owner_steamid
+  def playtime_text(self):
+    if self.playtime_forever is None or self.playtime_forever == 0:
+      return 'Not played'
+    minutes_rem=int(self.playtime_forever%60)
+    hours_total=int(self.playtime_forever/60)
+    hours_rem=int(hours_total%24)
+    days=int(hours_total/24)
+    if days > 0:
+      return '{} days, {} hours {} minutes'.format(days,hours_rem,minutes_rem)
+    elif hours_total > 0:
+      return '{} hours, {} minutes'.format(hours_total,minutes_rem)
+    else:
+      return '{} minutes'.format(self.playtime_forever)
   def test(self):
     pp.pprint("#")
     pp.pprint("#")

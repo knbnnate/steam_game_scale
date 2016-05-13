@@ -4,6 +4,8 @@ import io
 import requests
 from uuid import uuid4
 import time
+from game import steam_game
+from player import steam_player
 
 class url_image_store(tk.Tk):
   def __init__(self,parent=None,inert=False):
@@ -83,6 +85,7 @@ class url_image_store(tk.Tk):
       for tk_label_uuid in tk_label_uuids:
         del self.tk_label_store[tk_label_uuid]
       del self.time[url]
+      del self.uuids[url]
 
 class url_image():
   cache=url_image_store(inert=True)
@@ -95,13 +98,74 @@ class url_image():
   def invalidate(url):
     url_image.cache.invalidate(url)
 
+class steam_game_tk(tk.Frame,steam_game):
+  def __init__(self,master,steam_game_info,owner_personaname='Unknown Game Owner',owner_steamid=-1):
+    steam_game.__init__(self,steam_game_info,owner_personaname,owner_steamid)
+    tk.Frame.__init__(self,master)
+    self.pack()
+    self.logo_tk=url_image.get(url=self.img_logo_url,parent=self)
+    self.logo_tk.pack(side='top')
+    self.name_tk=tk.LabelFrame(text=self.name)
+    self.name_tk.pack(side='top',fill='both',expand='yes')
+    self.owner_tk=tk.Label(master=self.name_tk,text="Owner: {} [{}]".format(self.owner_personaname,self.owner_steamid))
+    self.owner_tk.configure(anchor='w')
+    self.owner_tk.pack(side='top',fill='both')
+    self.playtime_tk=tk.Label(master=self.name_tk,text="Playtime: {}".format(self.playtime_text()))
+    self.playtime_tk.configure(anchor='w')
+    self.playtime_tk.pack(side='top',fill='both',anchor='w')
+
+class steam_player_tk(tk.Frame,steam_player):
+  def __init__(self,master,steam_api_instance,playtime=0,steam_id_64=None,recurse=False):
+    steam_player.__init__(self,steam_api_instance,playtime,steam_id_64,recurse)
+    tk.Frame.__init__(self,master)
+    self.pack()
+    self.personaname_tk=tk.LabelFrame(self,text=self.personaname)
+    self.personaname_tk.pack(side='top',fill='both',expand='yes')
+    self.avatar_tk=url_image.get(url=self.avatar_url,parent=self.personaname_tk)
+    self.avatar_tk.pack(side='left')
+    self.info_frame_tk=tk.Frame(self.personaname_tk)
+    self.info_frame_tk.pack(side='right',fill='both',expand='yes')
+    self.realname_tk=tk.Label(self.personaname_tk,text="Real name: {}".format(self.realname))
+    self.realname_tk.configure(anchor='w')
+    self.realname_tk.pack(side='top',fill='both',expand='yes')
+    self.steamid_tk=tk.Label(self.personaname_tk,text="Steam ID: {}".format(self.steam_id_64))
+    self.steamid_tk.configure(anchor='w')
+    self.steamid_tk.pack(side='top',fill='both',expand='yes')
+    self.lists_tk=tk.Frame(self,height=25,width=40)
+    self.lists_tk.pack(side='top',fill='both',expand='yes')
+    self.steam_friends_frame_tk=tk.LabelFrame(self.lists_tk,height=15,text='Steam Friends')
+    self.steam_friends_frame_tk.pack(side='left',fill='both')
+    self.steam_friends_listbox_tk=tk.Listbox(self.steam_friends_frame_tk,height=15)
+    self.steam_friends_listbox_tk.pack(side='left',fill='y')
+    self.steam_friends_scrollbar_tk=tk.Scrollbar(self.steam_friends_frame_tk)
+    self.steam_friends_scrollbar_tk.pack(side='right',fill='y')
+    self.steam_friends_scrollbar_tk.configure(command=self.steam_friends_listbox_tk.yview)
+    self.steam_friends_listbox_tk.configure(yscrollcommand=self.steam_friends_scrollbar_tk.set)
+    self.steam_games_frame_tk=tk.LabelFrame(self.lists_tk,height=15,text='Steam Games')
+    self.steam_games_frame_tk.pack(side='right',fill='both')
+    self.steam_games_listbox_tk=tk.Listbox(self.steam_games_frame_tk,height=15)
+    self.steam_games_listbox_tk.pack(side='left',fill='y')
+    self.steam_games_scrollbar_tk=tk.Scrollbar(self.steam_games_frame_tk)
+    self.steam_games_scrollbar_tk.pack(side='right',fill='y')
+    self.steam_games_scrollbar_tk.configure(command=self.steam_games_listbox_tk.yview)
+    self.steam_games_listbox_tk.configure(yscrollcommand=self.steam_games_scrollbar_tk.set)
+    for friend in sorted([friend.personaname for friend in self.steam_friends]):
+      insert_index=self.steam_friends_listbox_tk.size()
+      self.steam_friends_listbox_tk.insert(insert_index,friend)
+    for game in sorted([game.name for game in self.steam_games]):
+      insert_index=self.steam_games_listbox_tk.size()
+      self.steam_games_listbox_tk.insert(insert_index,game)
+
 def tests():
+    
+  poc_url='https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/9c/9cecbe1f11b6fe03a1cc1fc3e9b779c37d160eb9.jpg'
+  
   def oops(root):
     url_image.invalidate(poc_url)
     
-  poc_url='https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/9c/9cecbe1f11b6fe03a1cc1fc3e9b779c37d160eb9.jpg'
   poc_url_2='https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/9c/9cecbe1f11b6fe03a1cc1fc3e9b779c37d160eb9_full.jpg'
   root=tk.Tk()
+  root.title("Oops!")
   image_label=url_image.get(poc_url,parent=root)
   image_label.pack(expand='yes')
   bigger_image_label=url_image.get(poc_url_2,parent=root)
@@ -116,3 +180,30 @@ def tests():
   ########################################################################################
   root.focus_force()
   root.mainloop()
+
+  game_app=tk.Tk()
+  game_app.title('Game stuff yeah!')
+  test_steam_game_tk=steam_game_tk(game_app,{'appid':391540,'img_icon_url':'2ce672b89b63ec1e70d2f12862e72eb4a33e9268','img_logo_url':'ae953fb87a0fd4958ca21995226c065f33290eba','name':'Undertale','playtime_forever':147},"Wild 'n Wooly Shambler",76561197960781001)
+  game_app.mainloop()
+
+  friend_app=tk.Tk()
+  friend_app.title('Friend stuff wooo!')
+  from api import steam_api
+  api_key_arg=input('Steam API Key: ')
+  api_instance=steam_api(api_key_arg)
+  api_instance.set_steam_id_64(api_instance.vanity_url_steamid('knbnnate'))
+  test_steam_player_tk=steam_player_tk(friend_app,api_instance,steam_id_64=api_instance.steam_id_64,recurse=True)
+
+tests()
+
+
+
+
+
+
+
+
+
+
+
+  

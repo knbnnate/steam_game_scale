@@ -9,9 +9,9 @@ if __name__ == '__main__':
   steamid_arg=None
   for arg in sys.argv:
     if arg.startswith('--apikey='):
-      api_key_arg=arg.partition('=')[2].partition('=')[0]
+      api_key_arg=arg.partition('=')[2]
     if arg.startswith('--steamid='):
-      steamid_arg=arg.partition('=')[2].partition('=')[0]
+      steamid_arg=arg.partition('=')[2]
   if api_key_arg is None:
     api_key_arg=input('Steam API Key: ')
   steam_api_instance = steam_api(api_key_arg)
