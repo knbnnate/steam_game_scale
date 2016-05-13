@@ -2,6 +2,7 @@ from api import steam_api
 from game import steam_game
 from player import steam_player
 import sys
+from tk_gui import tests as tk_gui_tests
 
 if __name__ == '__main__':
   api_key_arg=None
@@ -26,3 +27,5 @@ if __name__ == '__main__':
   steam_player_instance = steam_player(steam_api_instance=steam_api_instance,recurse=True)
   # Game test is implicit in player test
   steam_player_instance.test()
+  sys.stdout.flush()
+  tk_gui_tests()
