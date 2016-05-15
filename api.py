@@ -128,35 +128,64 @@ class steam_api():
 
   # Make sure this all seems to be working as intended
   def test(self,steamid=None):
+    exceptions=[]
     if steamid is None:
       steamid=self.steam_id_64
-    test_personaname = self.steamid_personaname(steamid)
-    pp.pprint("#")
-    pp.pprint("#")
-    pp.pprint("#")
-    pp.pprint(["### steam_api test ###","{}".format(test_personaname),"### steam_api_test ###"])
-    pp.pprint("#")
-    pp.pprint("#")
-    pp.pprint("#")
-    friend_steamids = self.friends_steamids(steamid)
-    pp.pprint(["Printing {} friends' steamids:".format(test_personaname)])
-    pp4.pprint([friend_steamids])
-    friend_personanames = self.friends_personanames(steamid)
-    pp.pprint(["Printing {} friends' personanames:".format(test_personaname)])
-    pp4.pprint([friend_personanames])
-    friend_details = self.friends_dicts(steamid)
-    pp.pprint(["Printing {} friends' details by personaname:".format(test_personaname)])
-    for personaname in friend_personanames:
-      pp4.pprint(["  Data for {0}".format(personaname)])
-      pp6.pprint([friend_details.get('personanames',{}).get(personaname,{})])
-    pp.pprint(["Printing {} friends' details by steamid:".format(test_personaname)])
-    for friend_steamid in friend_steamids:
-      pp4.pprint(["  Data for {0}".format(friend_steamid)])
-      pp6.pprint([friend_details.get('steamids',{}).get(friend_steamid,{})])
-    pp.pprint(["Printing {} owned games:".format(test_personaname)])
-    pp4.pprint([self.games_list(steamid)])
-    pp.pprint(["Printing details about the games played by {} for more than 3 hours:".format(test_personaname)])
-    pp4.pprint([self.games_info(steamid,60*3)])
+    try:
+      test_personaname = self.steamid_personaname(steamid)
+    except Exception as e:
+      exceptions.append([e,'Failure in steamid_personaname method'])
+      print('Failure in steamid_personaname method')
+      test_personaname='No name here due to previous failure'
+    try:
+      pp.pprint("#")
+      pp.pprint("#")
+      pp.pprint("#")
+      pp.pprint(["### steam_api test ###","{}".format(test_personaname),"### steam_api_test ###"])
+      pp.pprint("#")
+      pp.pprint("#")
+      pp.pprint("#")
+      friend_steamids = self.friends_steamids(steamid)
+      pp.pprint(["Printing {} friends' steamids:".format(test_personaname)])
+      pp4.pprint([friend_steamids])
+    except Exception as e:
+      exceptions.append([e,'Failure in friends_steamids method'])
+      print('Failure in friends_steamids method')
+      friend_steamids=[]
+    try:
+      friend_personanames = self.friends_personanames(steamid)
+      pp.pprint(["Printing {} friends' personanames:".format(test_personaname)])
+      pp4.pprint([friend_personanames])
+    except Exception as e:
+      exceptions.append([e,'Failure in friends_personanames method'])
+      print('Failure in friends_personanames method')
+      friend_personanames=["No friends' personanames due to previous failure"]
+    try:
+      friend_details = self.friends_dicts(steamid)
+      pp.pprint(["Printing {} friends' details by personaname:".format(test_personaname)])
+      for personaname in friend_personanames:
+        pp4.pprint(["  Data for {0}".format(personaname)])
+        pp6.pprint([friend_details.get('personanames',{}).get(personaname,{})])
+      pp.pprint(["Printing {} friends' details by steamid:".format(test_personaname)])
+      for friend_steamid in friend_steamids:
+        pp4.pprint(["  Data for {0}".format(friend_steamid)])
+        pp6.pprint([friend_details.get('steamids',{}).get(friend_steamid,{})])
+    except Exception as e:
+      exceptions.append([e,'Failure in friends_dicts method'])
+      print('Failure in friends_dicts method')
+      friend_details={'personanames':{},'steamids':{}}
+    try:
+      pp.pprint(["Printing {} owned games:".format(test_personaname)])
+      pp4.pprint([self.games_list(steamid)])
+    except Exception as e:
+      exceptions.append([e,'Failure in games_list method'])
+      print('Failure in games_list method')
+    try:
+      pp.pprint(["Printing details about the games played by {} for more than 3 hours:".format(test_personaname)])
+      pp4.pprint([self.games_info(steamid,60*3)])
+    except Exception as e:
+      exceptions.append([e,'Failure in games_info method'])
+      print('Failure in games_info method')
     pp.pprint("#")
     pp.pprint("#")
     pp.pprint("#")
@@ -164,3 +193,14 @@ class steam_api():
     pp.pprint("#")
     pp.pprint("#")
     pp.pprint("#")
+
+    if len(exceptions) == 0:
+      print('SUCCESS testing steam_api class')
+    elif len(exceptions) == 1:
+      print('FAILURE testing steam_api class')
+      for item in exceptions:
+        pp.pprint(item[1])
+    else:
+      print('FAILURES testing steam_api class')
+      for item in exceptions:
+        pp.pprint(item[1])

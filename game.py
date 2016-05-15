@@ -4,21 +4,31 @@ pp = PrettyPrinter(indent=2)
 pp2 = pp
 pp4 = PrettyPrinter(indent=4)
 
+class BadSteamGameInfoException(Exception):
+  def __init__(self,bad_info={},msg=''):
+    self.bad_info=bad_info
+    self.msg=msg
+
 class steam_game():
   def __init__(self,steam_game_info, owner_personaname='Unknown Game Owner', owner_steamid=-1):
+    self.steam_game_info=steam_game_info
     img_url_template='http://media.steampowered.com/steamcommunity/public/images/apps/{0}/{1}.jpg'
     if 'appid' in steam_game_info.keys():
       self.appid = steam_game_info['appid'] if 'appid' in steam_game_info.keys() else -1
       if 'img_icon_url' in steam_game_info.keys():
         self.img_icon_url = img_url_template.format(self.appid,steam_game_info['img_icon_url'])
+      elif 'empty_steam_game_img_icon_url' in steam_game_info.keys():
+        self.img_icon_url = 'https://steamcommunity-a.akamaihd.net/public/shared/images/header/globalheader_logo.png'
       else:
-        self.img_icon_url = None
+        raise BadSteamGameInfoException(steam_game_info,'self.img_icon_url failure')
       if 'img_logo_url' in steam_game_info.keys():
         self.img_logo_url = img_url_template.format(self.appid,steam_game_info['img_logo_url'])
+      elif 'empty_steam_game_img_logo_url' in steam_game_info.keys():
+        self.img_logo_url = 'https://steamcommunity-a.akamaihd.net/public/shared/images/header/globalheader_logo.png'
       else:
-        self.img_logo_url = None
+        raise BadSteamGameInfoException(steam_game_info,'self.img_logo_url failure')
     else:
-      self.appid = -1
+      raise BadSteamGameInfoException(steam_game_info,'appid failure')
     self.name = steam_game_info.get('name','Unknown Game Name')
     self.playtime_forever = steam_game_info.get('playtime_forever',0)
     self.owner_personaname = owner_personaname
@@ -26,6 +36,8 @@ class steam_game():
   def playtime_text(self):
     if self.playtime_forever is None or self.playtime_forever == 0:
       return 'Not played'
+    if self.playtime_forever == -1:
+      return 'No game selected'
     minutes_rem=int(self.playtime_forever%60)
     hours_total=int(self.playtime_forever/60)
     hours_rem=int(hours_total%24)
