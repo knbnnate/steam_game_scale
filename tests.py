@@ -3,7 +3,7 @@ from game import steam_game
 from player import steam_player
 import sys
 import os
-from tk_gui import tests as tk_gui_tests
+from broken_tk_gui import tests as tk_gui_tests
 
 if __name__ == '__main__':
 ################## Figure out an API key and a steam user to test with ##################
@@ -99,7 +99,7 @@ if __name__ == '__main__':
       print('FAILURES testing steam_player class')
       for item in player_game_exceptions:
         print(item[1])
-  do_tk_gui_test=input('Test the tk_gui class? (y/n, [y]) ')
+  do_tk_gui_test=input('Test the tk_gui module? (y/n, [y]) ')
   if do_tk_gui_test.lower() != 'n':
     test=tk_gui_tests(steam_api_instance)
     test.run_tests()
