@@ -38,3 +38,5 @@ https://www.google.com/?ion=1&espv=2#q=how%20to%20find%20my%20steam%20id
 and
 
 http://steamcommunity.com/dev/apikey
+
+To run the app, execute the steam_game_scale.pyw script using your python interpreter.

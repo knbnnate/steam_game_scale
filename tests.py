@@ -1,72 +1,28 @@
 from api import steam_api
 from game import steam_game
 from player import steam_player
+from steam_game_scale import params_input, steam_game_scale_tk
 import sys
 import os
-from broken_tk_gui import tests as tk_gui_tests
+import traceback
 
 if __name__ == '__main__':
-################## Figure out an API key and a steam user to test with ##################
-  steamid_provided=False
-  vanity_url_provided=False
-  api_key_provided=False
-  # Can have files setting api_key_arg, steamid_arg, vanity_url_arg
-  if os.path.isfile('api_key.py'):
-    try:
-      from api_key import api_key_arg
-      api_key_provided=True
-    except:
-      print('api_key.py does not set an api_key_arg string')
-  if os.path.isfile('vanity_url.py'):
-    try:
-      from vanity_url import vanity_url_arg
-      vanity_url_provided=True
-    except:
-      print('vanity_url.py does not set a vanity_url_arg string')
-  if not vanity_url_provided:
-    if os.path.isfile('steamid.py'):
-      try:
-        from steamid import steamid_arg
-        steamid_arg_provided=True
-      except:
-        print('steamid.py does not set a steamid_arg string')
-  # Can override the files with command line args
-  for arg in sys.argv:
-    if arg.startswith('--vanityurl='):
-      vanity_url_arg=arg.partition('=')[2]
-      vanity_url_provided=True
-    if arg.startswith('--apikey='):
-      api_key_arg=arg.partition('=')[2]
-      api_key_provided=True
-    if arg.startswith('--steamid='):
-      steamid_arg=arg.partition('=')[2]
-      steamid_provided=True
-  # If nothing provided in directory or on command line, prompt user in console
-  if not steamid_provided and not vanity_url_provided:
-    vanity_url_arg=input('Vanity URL (enter no text to input a steamid instead): ')
-    if vanity_url_arg != '':
-      vanity_url_provided=True
+  params=params_input()
+  steam_api_instance=None
+  try:
+    steam_api_instance=steam_api(params.api_key_arg)
+    if params.steamid_provided:
+      steam_api_instance.set_steam_id_64(params.steamid_arg)
+    elif params.vanity_url_provided:
+      params.steamid_arg=steam_api_instance.vanity_url_steamid(params.vanity_url_arg)
+      steam_api_instance.set_steam_id_64(params.steamid_arg)
     else:
-      steamid_arg=input('Steam ID: ')
-      if steamid_arg != '':
-        steamid_provided=True
-  if not api_key_provided:
-    api_key_arg=input('Steam API Key: ')
-    if api_key_arg != '':
-      api_key_provided=True
-  if api_key_provided:
-    steam_api_instance = steam_api(api_key_arg)
-  else:
-    print("Please provide a valid API key somehow or none of this will work")
-    sys.exit(0)
-  if not steamid_provided and not vanity_url_provided:
-    # Maintainer's vanity_url, better than nothing
-    steam_api_instance.set_steam_id_64(steam_api_instance.vanity_url_steamid('knbnnate'))
-  elif steamid_provided:
-    steam_api_instance.set_steam_id_64(steamid_arg)
-  else:
-    steam_api_instance.set_steam_id_64(steam_api_instance.vanity_url_steamid(vanity_url_arg))
-################## That was fun, on to tests ##################
+      print("No steamid and no vanity url provided; cannot proceed")
+      sys.exit(1)
+  except Exception as e:
+    print("Error on steamid or vanity url; cannot proceed.")
+    traceback.print_exc()
+    sys.exit(1)
 
   do_api_test=input('Test the steam_api class? (y/n, [y]) ')
   if do_api_test.lower() != 'n':
@@ -99,7 +55,6 @@ if __name__ == '__main__':
       print('FAILURES testing steam_player class')
       for item in player_game_exceptions:
         print(item[1])
-  do_tk_gui_test=input('Test the tk_gui module? (y/n, [y]) ')
-  if do_tk_gui_test.lower() != 'n':
-    test=tk_gui_tests(steam_api_instance)
-    test.run_tests()
+  do_steam_game_scale_tk_test=input('Run the gui app? (y/n, [y])')
+  if do_steam_game_scale_tk_test.lower() != 'n':
+    app=steam_game_scale_tk(params)

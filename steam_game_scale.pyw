@@ -18,12 +18,18 @@ class steam_colors():
   sfg=bg
   
 class params_input():
+  def clean_vanity_url(self):
+    if self.vanity_url_arg.endswith('/home'):
+      self.vanity_url_arg=self.vanity_url_arg.rpartition('/')[0]
+    if '/' in self.vanity_url_arg:
+      self.vanity_url_arg=self.vanity_url_arg.rpartition('/')[2]
   def submit_steamid(self):
     self.steamid_arg=id_dialog.steamid_prompt_entry.get()
     self.steamid_provided=True
     self.id_dialog.destroy()
   def submit_vanity_url(self):
     self.vanity_url_arg=self.id_dialog.vanity_url_prompt_entry.get()
+    self.clean_vanity_url()
     self.vanity_url_provided=True
     self.id_dialog.destroy()
   def submit_api_key(self):
@@ -48,6 +54,7 @@ class params_input():
       try:
         from vanity_url import vanity_url_arg
         self.vanity_url_arg=vanity_url_arg
+        self.clean_vanity_url()
         self.vanity_url_provided=True
       except:
         print('vanity_url.py does not set a vanity_url_arg string')
@@ -63,6 +70,7 @@ class params_input():
     for arg in sys.argv:
       if arg.startswith('--vanityurl='):
         self.vanity_url_arg=arg.partition('=')[2]
+        self.clean_vanity_url()
         self.vanity_url_provided=True
       if arg.startswith('--apikey='):
         self.api_key_arg=arg.partition('=')[2]
