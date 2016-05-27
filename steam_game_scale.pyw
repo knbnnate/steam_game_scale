@@ -1,4 +1,6 @@
 import tkinter as tk               #
+import tkinter.font as tkfont      #
+tk.font=tkfont                     # Yay aliasing
 from PIL import Image, ImageTk     # PIL(low) dependency
 import sys                         #
 import os                          #
@@ -18,7 +20,23 @@ class steam_colors():
   fg='#767676'
   sbg=fg
   sfg=bg
-  
+
+def print_toplevel(msg):
+  popup=tk.Toplevel(None)
+  popup.configure(bg=steam_colors.bg)
+  img=ImageTk.PhotoImage(file='steam_game_scale.png')
+  popup.tk.call('wm','iconphoto',popup._w,img)
+  popup.title('MESSAGE')
+  popup.option_add('*Background',steam_colors.bg)
+  popup.option_add('*Foreground',steam_colors.fg)
+  popup.option_add('*Selectbackground',steam_colors.fg)
+  popup.option_add('*Selectforeground',steam_colors.bg)
+  popup_label=tk.Label(popup,text=msg)
+  popup_label.pack()
+  popup_button=tk.Button(popup,text='OK',command=popup.destroy)
+  popup_button.pack()
+  popup.mainloop()
+
 class params_input():
   def load_params(self):
     if not os.path.isfile(self.saved_filename):
@@ -43,40 +61,119 @@ class params_input():
     if '/' in self.vanity_url_arg:
       self.vanity_url_arg=self.vanity_url_arg.rpartition('/')[2]
   def create_api_key_entry(self):
-    pass
-  def api_key_entry_button(self):
-    pass
-  def create_vanity_url_entry(self):
-    pass
-  def vanity_url_entry_button(self):
-    pass
+    name=self.params_dialog.api_key_input_name_entry.get()
+    value=self.params_dialog.api_key_input_value_entry.get()
+    if len(name) > 0 and len(value) > 0:
+      self.loaded_api_keys[name]=value
+      self.save_params()
+      self.init_api_key_prompt_listbox()
+      self.params_dialog.api_key_input_name_entry.delete(0,tk.END)
+      self.params_dialog.api_key_input_value_entry.delete(0,tk.END)
+  def delete_api_key_entry(self):
+    for selection_index in self.params_dialog.api_key_prompt_listbox.curselection():
+      selection_text=self.params_dialog.api_key_prompt_listbox.get(int(selection_index))
+      selected_api_key=self.params_dialog.api_key_selection_map[selection_text]
+      del(self.loaded_api_keys[selected_api_key])
+      self.save_params()
+      self.init_api_key_prompt_listbox()
+  def lookup_vanity_url(self):
+    selected_api_key=None
+    steamid=None
+    for selection_index in self.params_dialog.api_key_prompt_listbox.curselection():
+      selection_text=self.params_dialog.api_key_prompt_listbox.get(int(selection_index))
+      selected_api_key_name=self.params_dialog.api_key_selection_map[selection_text]
+      selected_api_key=self.loaded_api_keys[selected_api_key_name]
+    if selected_api_key is not None:
+      try:
+        temp_api_instance=steam_api(selected_api_key)
+        vanity_url=self.params_dialog.vanity_url_input_value_entry.get()
+        steamid=temp_api_instance.vanity_url_steamid(vanity_url)
+      except:
+        vanity_url=None
+        print_toplevel('Failure looking up Custom URL - bad API key selection. Deleting selected key is suggested.')
+    else:
+      print_toplevel('Please select an API key to perform this lookup')
+    if len(self.params_dialog.steamid_input_value_entry.get()) > 0:
+      self.params_dialog.steamid_input_value_entry.delete(0,tk.END)
+    if steamid is not None:
+      self.params_dialog.steamid_input_value_entry.insert(0,steamid)
+      if vanity_url is not None:
+        self.loaded_vanity_urls[vanity_url]=steamid
+        self.save_params()
   def create_steamid_entry(self):
-    self.add_steamid_popup=tk.Tk(self.params_dialog)
-    pass
-  def steamid_entry_button(self):
-    # stuff
-    self.add_steamid_popup.destroy()
-    self.init_steamid_prompt_listbox()
+    name=self.params_dialog.steamid_input_name_entry.get()
+    value=self.params_dialog.steamid_input_value_entry.get()
+    if len(name) > 0 and len(value) > 0:
+      self.loaded_steamids[name]=value
+      self.save_params()
+      self.init_steamid_prompt_listbox()
+      self.params_dialog.steamid_input_name_entry.delete(0,tk.END)
+      self.params_dialog.steamid_input_value_entry.delete(0,tk.END)
+  def delete_steamid_entry(self):
+    for selection_index in self.params_dialog.steamid_prompt_listbox.curselection():
+      selection_text=self.params_dialog.steamid_prompt_listbox.get(int(selection_index))
+      selected_steamid_name=self.params_dialog.steamid_selection_map[selection_text]
+      del(self.loaded_steamids[selected_steamid_name])
+      self.save_params()
+      self.init_steamid_prompt_listbox()
   def api_key_help_button(self):
     webbrowser.open('http://steamcommunity.com/dev/apikey')
   def vanity_url_help_button(self):
-    webbrowser.open('http://steamcommunity.com/my/home')
+    webbrowser.open('http://steamcommunity.com/my/edit')
   def init_steamid_prompt_listbox(self):
     while self.params_dialog.steamid_prompt_listbox.size() > 0:
       self.params_dialog.steamid_prompt_listbox.delete(0)
-    for steamid_name in sorted(self.loaded_steamids.keys()):
+    for steamid_name in sorted(set(self.loaded_steamids.keys())):
       self.params_dialog.steamid_prompt_listbox.insert(self.params_dialog.steamid_prompt_listbox.size(),
                                                        '{}: [{}]'.format(steamid_name,self.loaded_steamids[steamid_name]))
+      self.params_dialog.steamid_selection_map['{}: [{}]'.format(steamid_name,self.loaded_steamids[steamid_name])]=steamid_name
+    # Adjust listbox width since tkinter does not do it for you, ever
+    if len(self.loaded_steamids.keys()) > 0:
+      f = tk.font.Font(font=self.params_dialog.steamid_prompt_listbox.cget("font"))
+      req_width=max([len('{}: [{}]'.format(steamid_name,self.loaded_steamids[steamid_name])) for steamid_name in self.loaded_steamids.keys()])
+      self.params_dialog.steamid_prompt_listbox.configure(width=req_width)
+  def init_api_key_prompt_listbox(self):
+    while self.params_dialog.api_key_prompt_listbox.size() > 0:
+      self.params_dialog.api_key_prompt_listbox.delete(0)
+    for api_key_name in sorted(set(self.loaded_api_keys.keys())):
+      self.params_dialog.api_key_prompt_listbox.insert(self.params_dialog.api_key_prompt_listbox.size(),
+                                                       '{}: [{}]'.format(api_key_name,'*****************'))
+      self.params_dialog.api_key_selection_map['{}: [{}]'.format(api_key_name,'*****************')]=api_key_name
+    # Adjust listbox width since tkinter does not do it for you, ever
+    if len(self.loaded_api_keys.keys()) > 0:
+      f = tk.font.Font(font=self.params_dialog.api_key_prompt_listbox.cget("font"))
+      req_width=max([len('{}: [{}]'.format(api_key_name,'*****************')) for api_key_name in self.loaded_api_keys.keys()])
+      self.params_dialog.api_key_prompt_listbox.configure(width=req_width)
+  def api_key_listbox_select(self,event):
+    for selection_index in self.params_dialog.api_key_prompt_listbox.curselection():
+      selection_text=self.params_dialog.api_key_prompt_listbox.get(int(selection_index))
+      selected_api_key=self.params_dialog.api_key_selection_map[selection_text]
+      self.api_key_arg=self.loaded_api_keys[selected_api_key]
+      self.api_key_provided=True
   def steamid_listbox_select(self,event):
-    pass
-  def login_button(self):
-    self.save_params()
+    for selection_index in self.params_dialog.steamid_prompt_listbox.curselection():
+      selection_text=self.params_dialog.steamid_prompt_listbox.get(int(selection_index))
+      selected_steamid=self.params_dialog.steamid_selection_map[selection_text]
+      self.steamid_arg=self.loaded_steamids[selected_steamid]
+      self.steamid_provided=True
+      self.vanity_url_provided=False
+  def start_app_button(self):
+    if self.steamid_arg is not None and self.api_key_arg is not None:
+      self.params_dialog.destroy()
+    else:
+      print_toplevel('Please select an API key and Steam ID to start the app')
   def __init__(self):
     self.saved_filename='saved_params.yaml'
     self.loaded_params={}
     self.loaded_api_keys={}
     self.loaded_vanity_urls={}
     self.load_params()
+    self.steamid_arg=None
+    self.api_key_arg=None
+    self.vanity_url_arg=None
+    self.steamid_provided=False
+    self.api_key_provided=False
+    self.vanity_url_provided=False
     self.params_dialog = tk.Tk(None)
     self.params_dialog.title('Initialization Information')
     img=ImageTk.PhotoImage(file='steam_game_scale.png')
@@ -84,29 +181,87 @@ class params_input():
     self.params_dialog.configure(bg=steam_colors.bg)
     self.params_dialog.option_add('*Background',steam_colors.bg)
     self.params_dialog.option_add('*Foreground',steam_colors.fg)
-    self.params_dialog.steamid_prompt_label=tk.LabelFrame(self.params_dialog,text='Please select a SteamID')
-    self.params_dialog.steamid_prompt_label.pack()
-    self.params_dialog.steamid_prompt_listbox=tk.Listbox(self.params_dialog.steamid_prompt_label)
+    self.params_dialog.option_add('*Font','courier')
+    
+    # Helper webbrowser buttons
+    self.params_dialog.api_key_help_button=tk.Button(self.params_dialog,text='Help me find my API key',command=self.api_key_help_button)
+    self.params_dialog.api_key_help_button.pack(ipadx=5,ipady=5,padx=5,pady=5)
+    self.params_dialog.vanity_url_help_button=tk.Button(self.params_dialog,text='Help me find my Custom URL',command=self.vanity_url_help_button)
+    self.params_dialog.vanity_url_help_button.pack(ipadx=5,ipady=5,padx=5,pady=5)
+    
+    ### API Key selection/input
+    # select
+    self.params_dialog.api_key_selection_map={}
+    self.params_dialog.api_key_prompt_label=tk.LabelFrame(self.params_dialog,text='Please select a saved API key')
+    self.params_dialog.api_key_prompt_label.pack(side='left',ipadx=1,ipady=1,padx=1,pady=1,fill='both')
+    self.params_dialog.api_key_prompt_listbox=tk.Listbox(self.params_dialog.api_key_prompt_label,exportselection=0)
+    self.init_api_key_prompt_listbox()
+    self.params_dialog.api_key_prompt_listbox.pack(ipadx=5,ipady=5,padx=5,pady=5)
+    self.params_dialog.api_key_prompt_listbox.bind('<<ListboxSelect>>',self.api_key_listbox_select)
+    self.params_dialog.api_key_prompt_delete_button=tk.Button(self.params_dialog.api_key_prompt_label,text='Delete Selected API Key')
+    self.params_dialog.api_key_prompt_delete_button.configure(command=self.delete_api_key_entry)
+    self.params_dialog.api_key_prompt_delete_button.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    # input
+    self.params_dialog.api_key_input_label=tk.Label(self.params_dialog.api_key_prompt_label,text='Or, add a new API key to the list:')
+    self.params_dialog.api_key_input_label.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.api_key_input_name_label=tk.Label(self.params_dialog.api_key_prompt_label,text='New API key name:')
+    self.params_dialog.api_key_input_name_label.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.api_key_input_name_entry=tk.Entry(self.params_dialog.api_key_prompt_label)
+    self.params_dialog.api_key_input_name_entry.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.api_key_input_value_label=tk.Label(self.params_dialog.api_key_prompt_label,text='New API key:')
+    self.params_dialog.api_key_input_value_label.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.api_key_input_value_entry=tk.Entry(self.params_dialog.api_key_prompt_label,show='*')
+    self.params_dialog.api_key_input_value_entry.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.api_key_add_button=tk.Button(self.params_dialog.api_key_prompt_label,text='Add API key')
+    self.params_dialog.api_key_add_button.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.api_key_add_button.configure(command=self.create_api_key_entry)
+    
+    ### SteamID selection/input
+    # select
+    self.params_dialog.steamid_selection_map={}
+    self.params_dialog.steamid_prompt_label=tk.LabelFrame(self.params_dialog,text='Please select a saved SteamID')
+    self.params_dialog.steamid_prompt_label.pack(side='left',ipadx=1,ipady=1,padx=1,pady=1,fill='both')
+    self.params_dialog.steamid_prompt_listbox=tk.Listbox(self.params_dialog.steamid_prompt_label,exportselection=0)
     self.init_steamid_prompt_listbox()
-    self.params_dialog.steamid_prompt_listbox.pack()
-    self.params_dialog.steamid_add_button=tk.Button(self.params_dialog.steamid_prompt_label,text='Add SteamID')
+    self.params_dialog.steamid_prompt_listbox.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.steamid_prompt_listbox.bind('<<ListboxSelect>>',self.steamid_listbox_select)
+    self.params_dialog.steamid_prompt_delete_button=tk.Button(self.params_dialog.steamid_prompt_label,text='Delete Selected Steam ID')
+    self.params_dialog.steamid_prompt_delete_button.configure(command=self.delete_steamid_entry)
+    self.params_dialog.steamid_prompt_delete_button.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    # input
+    self.params_dialog.steamid_input_label=tk.Label(self.params_dialog.steamid_prompt_label,text='Or, add a new Steam ID to the list:')
+    self.params_dialog.steamid_input_label.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.steamid_input_name_label=tk.Label(self.params_dialog.steamid_prompt_label,text='New Steam ID name:')
+    self.params_dialog.steamid_input_name_label.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.steamid_input_name_entry=tk.Entry(self.params_dialog.steamid_prompt_label)
+    self.params_dialog.steamid_input_name_entry.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.steamid_input_value_label=tk.Label(self.params_dialog.steamid_prompt_label,text='New Steam ID:')
+    self.params_dialog.steamid_input_value_label.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.steamid_input_value_entry=tk.Entry(self.params_dialog.steamid_prompt_label)
+    self.params_dialog.steamid_input_value_entry.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.steamid_add_button=tk.Button(self.params_dialog.steamid_prompt_label,text='Add Steam ID')
+    self.params_dialog.steamid_add_button.pack(ipadx=1,ipady=1,padx=1,pady=1)
     self.params_dialog.steamid_add_button.configure(command=self.create_steamid_entry)
-    self.params_dialog.steamid_add_button.pack()
-    self.add_steamid_popup=None
-    self.params_dialog.vanity_url_prompt_label=tk.LabelFrame(self.params_dialog,text='OR, please enter your vanity url')
-    self.params_dialog.vanity_url_prompt_label.pack()
-    self.params_dialog.vanity_url_prompt_entry=tk.Entry(self.params_dialog.vanity_url_prompt_label)
-    self.params_dialog.vanity_url_prompt_entry.pack()
-    self.params_dialog.vanity_url_submit_button=tk.Button(self.params_dialog.vanity_url_prompt_label,text='Submit Vanity URL')
-    self.params_dialog.vanity_url_submit_button.configure(command=self.submit_vanity_url)
-    self.params_dialog.vanity_url_submit_button.pack()
-    self.params_dialog.api_key_prompt_label=tk.LabelFrame(self.params_dialog,text='Please enter your Steam API Key')
-    self.params_dialog.api_key_prompt_label.pack()
-    self.params_dialog.api_key_prompt_entry=tk.Entry(self.params_dialog.api_key_prompt_label)
-    self.params_dialog.api_key_prompt_entry.pack()
-    self.params_dialog.api_key_submit_button=tk.Button(self.params_dialog.api_key_prompt_label,text='Submit Steam API Key')
-    self.params_dialog.api_key_submit_button.configure(command=self.submit_api_key)
-    self.params_dialog.api_key_submit_button.pack()
+    # by vanity url
+    self.params_dialog.vanity_url_input_label=tk.Label(self.params_dialog.steamid_prompt_label,text="Or, lookup a new Steam ID by Custom URL lookup:\n(Requires API Key)")
+    self.params_dialog.vanity_url_input_label.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.vanity_url_input_value_label=tk.Label(self.params_dialog.steamid_prompt_label,text='Custom URL for lookup:')
+    self.params_dialog.vanity_url_input_value_label.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.vanity_url_input_value_entry=tk.Entry(self.params_dialog.steamid_prompt_label)
+    self.params_dialog.vanity_url_input_value_entry.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.vanity_url_lookup_button=tk.Button(self.params_dialog.steamid_prompt_label,text='Lookup Steam ID')
+    self.params_dialog.vanity_url_lookup_button.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.vanity_url_lookup_button.configure(command=self.lookup_vanity_url)
+
+    ### Start steam_game_scale app
+    # select
+    self.params_dialog.start_label=tk.LabelFrame(self.params_dialog,text='Start Steam Game Scale')
+    self.params_dialog.start_label.pack(side='left',ipadx=1,ipady=1,padx=1,pady=1,fill='both')
+    self.params_dialog.start_button=tk.Button(self.params_dialog.start_label,text='Apply Parameters and Start App')
+    self.params_dialog.start_button.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.start_button.configure(command=self.start_app_button)
+
+    # Main loop go go go
     self.params_dialog.mainloop()
 
 def print_tk(msg):
@@ -320,7 +475,7 @@ class steam_game_scale_tk():
     try:
       self.player=steam_player(self.api_instance,steam_id_64=self.api_instance.steam_id_64,recurse=True)
     except Exception as e:
-      print_tk("Error loading player and game data; cannot proceed.\n{}".format(traceback.format_exc()))
+      print_tk("Please try again if your Steam ID and API key are valid - rarely, the Steam API fails and causes this error.")
       sys.exit(1)
     self.app = tk.Tk(None)
     self.app.geometry('900x900')
