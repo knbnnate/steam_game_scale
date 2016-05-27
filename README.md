@@ -9,7 +9,9 @@ requests module
 
 Pillow's implementation of the PIL
 
-A SteamID - 64-bit, corresponding to a PUBLIC profile to allow GetFriendList lookups to work
+PyYAML
+
+A SteamID - 64-bit, corresponding to a PUBLIC profile to allow GetFriendList lookups to work. You can also rely on your "Vanity URL" instead of remembering your Steam ID, if you've set up a vanity url.
 
 A Steam API Key
 
@@ -32,6 +34,10 @@ pip install requests
 and
 
 pip install Pillow
+
+and
+
+pip install PyYAML
 
 https://www.google.com/?ion=1&espv=2#q=how%20to%20find%20my%20steam%20id
 
