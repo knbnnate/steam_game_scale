@@ -223,7 +223,7 @@ class params_input():
     self.params_dialog.steamid_prompt_label.pack(side='left',ipadx=1,ipady=1,padx=1,pady=1,fill='both')
     self.params_dialog.steamid_prompt_listbox=tk.Listbox(self.params_dialog.steamid_prompt_label,exportselection=0)
     self.init_steamid_prompt_listbox()
-    self.params_dialog.steamid_prompt_listbox.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.steamid_prompt_listbox.pack(ipadx=5,ipady=5,padx=5,pady=5)
     self.params_dialog.steamid_prompt_listbox.bind('<<ListboxSelect>>',self.steamid_listbox_select)
     self.params_dialog.steamid_prompt_delete_button=tk.Button(self.params_dialog.steamid_prompt_label,text='Delete Selected Steam ID')
     self.params_dialog.steamid_prompt_delete_button.configure(command=self.delete_steamid_entry)
@@ -258,7 +258,7 @@ class params_input():
     self.params_dialog.start_label=tk.LabelFrame(self.params_dialog,text='Start Steam Game Scale')
     self.params_dialog.start_label.pack(side='left',ipadx=1,ipady=1,padx=1,pady=1,fill='both')
     self.params_dialog.start_button=tk.Button(self.params_dialog.start_label,text='Apply Parameters and Start App')
-    self.params_dialog.start_button.pack(ipadx=1,ipady=1,padx=1,pady=1)
+    self.params_dialog.start_button.pack(ipadx=5,ipady=5,padx=5,pady=5)
     self.params_dialog.start_button.configure(command=self.start_app_button)
 
     # Main loop go go go
